@@ -1,0 +1,35 @@
+MODEL:
+  META_ARCHITECTURE: "GeneralizedRCNN"
+  BACKBONE:
+    NAME: "build_fcos_vovnet_fpn_backbone"
+    FREEZE_AT: 0
+  VOVNET:
+    OUT_FEATURES: ["stage3", "stage4", "stage5"]
+  FPN:
+    IN_FEATURES: ["stage3", "stage4", "stage5"]
+  PROPOSAL_GENERATOR:
+    NAME: "FCOS"  
+  FCOS:
+    POST_NMS_TOPK_TEST: 50
+  # PIXEL_MEAN: [102.9801, 115.9465, 122.7717]
+  MASK_ON: True
+  MASKIOU_ON: True
+  ROI_HEADS:
+    NAME: "CenterROIHeads"
+    IN_FEATURES: ["p3", "p4", "p5"]
+  ROI_MASK_HEAD:
+    NAME: "SpatialAttentionMaskHead"
+    ASSIGN_CRITERION: "ratio"
+    NUM_CONV: 4
+    POOLER_RESOLUTION: 14
+DATASETS:
+  TRAIN: ("coco_2017_train",)
+  TEST: ("coco_2017_val",)
+SOLVER:
+  CHECKPOINT_PERIOD: 10000
+  IMS_PER_BATCH: 16
+  BASE_LR: 0.01  # Note that RetinaNet uses a different default learning rate
+  STEPS: (60000, 80000)
+  MAX_ITER: 90000
+INPUT:
+  MIN_SIZE_TRAIN: (640, 672, 704, 736, 768, 800)

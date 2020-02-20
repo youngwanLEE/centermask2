@@ -1,0 +1,9 @@
+_BASE_: "Base-CenterMask-VoVNet.yaml"
+MODEL:
+  WEIGHTS: "https://www.dropbox.com/s/q98pypf96rhtd8y/vovnet39_ese_detectron2.pth?dl=1"
+  VOVNET:
+    CONV_BODY : "V-39-eSE"
+SOLVER:
+  STEPS: (210000, 250000)
+  MAX_ITER: 270000
+OUTPUT_DIR: "output/centermask/CenterMask-V-39-ms-3x"
