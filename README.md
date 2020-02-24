@@ -137,8 +137,8 @@ If you use VoVNet, please use the following BibTeX entry.
 @article{lee2019centermask,
   title={CenterMask: Real-Time Anchor-Free Instance Segmentation},
   author={Lee, Youngwan and Park, Jongyoul},
-  journal={arXiv preprint arXiv:1911.06667},
-  year={2019}
+  booktitle={CVPR},
+  year={2020}
 }
 ```
 
