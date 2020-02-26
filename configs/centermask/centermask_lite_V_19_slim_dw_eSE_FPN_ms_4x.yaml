@@ -1,0 +1,9 @@
+_BASE_: "Base-CenterMask-Lite-VoVNet.yaml"
+MODEL:
+  WEIGHTS: "https://www.dropbox.com/s/f3s7ospitqoals1/vovnet19_ese_slim_dw_detectron2.pth?dl=1"
+  VOVNET:
+    CONV_BODY : "V-19-slim-dw-eSE"
+SOLVER:
+  STEPS: (300000, 340000)
+  MAX_ITER: 360000
+OUTPUT_DIR: "output/centermask/CenterMask-Lite-V-19-slim-dw-ms-4x"

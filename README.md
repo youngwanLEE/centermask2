@@ -21,6 +21,7 @@
 
 ## Updates
 - CenterMask2 has been released. (20/02/2020)
+- Lightweight VoVNet has ben released. (26/02/2020)
 
 ## Results on COCO val
 
@@ -64,14 +65,24 @@ CenterMask (maskrcnn-benchmark)|V2-99|3x|0.106|40.2|45.6|[link](https://github.c
 |:--------:|:--------:|:--:|:--:|:----:|:----:|:--------:|
 |YOLACT550|R-50|4x|0.023|28.2|30.3|[link](https://github.com/dbolya/yolact)
 |CenterMask (maskrcnn-benchmark)|V-19|4x|0.023|32.4|35.9|[link](https://github.com/youngwanLEE/CenterMask#coco-val2017-results)
-|**CenterMask2**|V-19|4x|0.023|**32.8**|**35.9**|<a href="https://dl.dropbox.com/s/dret2ap7djty7mp/centermask2-lite-V-19-eSE-FPN-ms-4x.pth">model</a>&nbsp;\|&nbsp;<a href="https://dl.dropbox.com/s/zsta7azy87a833u/centermask2-lite-V-19-eSE-FPN-ms-4x-metrics.json">metrics</a>
+|**CenterMask2-Lite**|V-19|4x|0.023|**32.8**|**35.9**|<a href="https://dl.dropbox.com/s/dret2ap7djty7mp/centermask2-lite-V-19-eSE-FPN-ms-4x.pth">model</a>&nbsp;\|&nbsp;<a href="https://dl.dropbox.com/s/zsta7azy87a833u/centermask2-lite-V-19-eSE-FPN-ms-4x-metrics.json">metrics</a>
 ||
 |YOLACT550|R-101|4x|0.030|28.2|30.3|[link](https://github.com/dbolya/yolact)
 |YOLACT550++|R-50|4x|0.029|34.1|-|[link](https://github.com/dbolya/yolact)
 |YOLACT550++|R-101|4x|0.036|34.6|-|[link](https://github.com/dbolya/yolact)
 |CenterMask (maskrcnn-benchmark)|V-39|4x|0.027|36.3|40.7|[link](https://github.com/youngwanLEE/CenterMask#coco-val2017-results)
-|**CenterMask2**|V-39|4x|0.028|**36.7**|**40.9**|<a href="https://dl.dropbox.com/s/uwc0ypa1jvco2bi/centermask2-lite-V-39-eSE-FPN-ms-4x.pth">model</a>&nbsp;\|&nbsp;<a href="https://dl.dropbox.com/s/aoa6y3i3el4edbk/centermask2-lite-V-39-eSE-FPN-ms-4x-metrics.json">metrics</a>
+|**CenterMask2-Lite**|V-39|4x|0.028|**36.7**|**40.9**|<a href="https://dl.dropbox.com/s/uwc0ypa1jvco2bi/centermask2-lite-V-39-eSE-FPN-ms-4x.pth">model</a>&nbsp;\|&nbsp;<a href="https://dl.dropbox.com/s/aoa6y3i3el4edbk/centermask2-lite-V-39-eSE-FPN-ms-4x-metrics.json">metrics</a>
 * Note that The inference time is measured on Titan Xp GPU for fair comparison with YOLACT.
+
+### Lightweight VoVNet backbone
+
+|Method|Backbone|Param.|lr sched|inference time|mask AP|box AP|download|
+|:--------:|:--------:|:--:|:--:|:--:|:----:|:----:|:--------:|
+|CenterMask2-Lite|V-19|11.2M|4x|0.023|32.8|35.9|<a href="https://dl.dropbox.com/s/dret2ap7djty7mp/centermask2-lite-V-19-eSE-FPN-ms-4x.pth">model</a>&nbsp;\|&nbsp;<a href="https://dl.dropbox.com/s/zsta7azy87a833u/centermask2-lite-V-19-eSE-FPN-ms-4x-metrics.json">metrics</a>
+|CenterMask2-Lite|V-19-**Slim**|3.1M|4x|0.021|29.8|32.5|<a href="https://dl.dropbox.com/s/o2n1ifl0zkbv16x/centermask-lite-V-19-eSE-slim-FPN-ms-4x.pth">model</a>&nbsp;\|&nbsp;<a href="https://dl.dropbox.com/s/8y71oz0kxwqk7go/centermask-lite-V-19-eSE-slim-FPN-ms-4x-metrics.json?dl=0">metrics</a>
+|CenterMask2-Lite|V-19**Slim**-**DW**|1.8M|4x|0.020|27.1|29.5|<a href="https://dl.dropbox.com/s/vsvhwtqm6ko1c7m/centermask-lite-V-19-eSE-slim-dw-FPN-ms-4x.pth">model</a>&nbsp;\|&nbsp;<a href="https://dl.dropbox.com/s/q4idjnsgvo151zx/centermask-lite-V-19-eSE-slim-dw-FPN-ms-4x-metrics.json">metrics</a>
+* _**DW** and **Slim** denote depthwise separable convolution and a thiner model with half the channel size, respectively._   
+* __Params.__ means the number of parameters of backbone.   
 
 
 
@@ -85,6 +96,8 @@ Prepare for coco dataset following [this instruction](https://github.com/faceboo
 #### ImageNet Pretrained Models
 
 We provide backbone weights pretrained on ImageNet-1k dataset.
+* [VoVNetV2-19-Slim-DW](https://www.dropbox.com/s/f3s7ospitqoals1/vovnet19_ese_slim_dw_detectron2.pth)
+* [VoVNetV2-19-Slim](https://www.dropbox.com/s/8h5ybmi4ftbcom0/vovnet19_ese_slim_detectron2.pth)
 * [VoVNetV2-19](https://dl.dropbox.com/s/rptgw6stppbiw1u/vovnet19_ese_detectron2.pth)
 * [VoVNetV2-39](https://dl.dropbox.com/s/q98pypf96rhtd8y/vovnet39_ese_detectron2.pth)
 * [VoVNetV2-57](https://dl.dropbox.com/s/8xl0cb3jj51f45a/vovnet57_ese_detectron2.pth)
@@ -118,7 +131,7 @@ python train_net.py --config-file "configs/centermask/centermask_V_39_eSE_FPN_ms
 ```
 
 ## TODO
- - [ ] Adding Lightweight models
+ - [x] Adding Lightweight models
  - [ ] Applying CenterMask for PointRend or Panoptic-FPN.
 
 
@@ -137,8 +150,8 @@ If you use VoVNet, please use the following BibTeX entry.
 @article{lee2019centermask,
   title={CenterMask: Real-Time Anchor-Free Instance Segmentation},
   author={Lee, Youngwan and Park, Jongyoul},
-  journal={arXiv preprint arXiv:1911.06667},
-  year={2019}
+  booktitle={CVPR},
+  year={2020}
 }
 ```
 
