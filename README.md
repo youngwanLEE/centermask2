@@ -81,7 +81,7 @@ CenterMask (maskrcnn-benchmark)|V2-99|3x|0.106|40.2|45.6|[link](https://github.c
 |CenterMask2-Lite|V-19|11.2M|4x|0.023|32.8|35.9|<a href="https://dl.dropbox.com/s/dret2ap7djty7mp/centermask2-lite-V-19-eSE-FPN-ms-4x.pth">model</a>&nbsp;\|&nbsp;<a href="https://dl.dropbox.com/s/zsta7azy87a833u/centermask2-lite-V-19-eSE-FPN-ms-4x-metrics.json">metrics</a>
 |CenterMask2-Lite|V-19-**Slim**|3.1M|4x|0.021|29.8|32.5|<a href="https://dl.dropbox.com/s/o2n1ifl0zkbv16x/centermask-lite-V-19-eSE-slim-FPN-ms-4x.pth">model</a>&nbsp;\|&nbsp;<a href="https://dl.dropbox.com/s/8y71oz0kxwqk7go/centermask-lite-V-19-eSE-slim-FPN-ms-4x-metrics.json?dl=0">metrics</a>
 |CenterMask2-Lite|V-19**Slim**-**DW**|1.8M|4x|0.020|27.1|29.5|<a href="https://dl.dropbox.com/s/vsvhwtqm6ko1c7m/centermask-lite-V-19-eSE-slim-dw-FPN-ms-4x.pth">model</a>&nbsp;\|&nbsp;<a href="https://dl.dropbox.com/s/q4idjnsgvo151zx/centermask-lite-V-19-eSE-slim-dw-FPN-ms-4x-metrics.json">metrics</a>
-* _**DW** and **Slim** denote depthwise separable convolution and a thiner model with half the channel size, respectively._   
+* _**DW** and **Slim** denote depthwise separable convolution and a thinner model with half the channel size, respectively._   
 * __Params.__ means the number of parameters of backbone.   
 
 
