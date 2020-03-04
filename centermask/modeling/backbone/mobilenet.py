@@ -1,19 +1,28 @@
 # taken from https://github.com/tonylins/pytorch-mobilenet-v2/
 # Published by Ji Lin, tonylins
 # licensed under the  Apache License, Version 2.0, January 2004
+# Modified by Youngwan Lee, Feburary 2020
 
 from torch import nn
 from torch.nn import BatchNorm2d
-#from detectron2.layers.batch_norm import NaiveSyncBatchNorm as BatchNorm2d
-from detectron2.layers import Conv2d
+from detectron2.layers import Conv2d, FrozenBatchNorm2d, ShapeSpec
 from detectron2.modeling.backbone.build import BACKBONE_REGISTRY
 from detectron2.modeling.backbone import Backbone
+from detectron2.modeling.backbone.fpn import FPN, LastLevelMaxPool
 
+from .fpn import LastLevelP6, LastLevelP6P7
+
+__all__ = [
+    "MobileNetV2",
+    "build_mnv2_backbone",
+    "build_mobilenetv2_fpn_backbone",
+    "build_fcos_mobilenetv2_fpn_backbone"
+]
 
 def conv_bn(inp, oup, stride):
     return nn.Sequential(
         Conv2d(inp, oup, 3, stride, 1, bias=False),
-        BatchNorm2d(oup),
+        FrozenBatchNorm2d(oup),
         nn.ReLU6(inplace=True)
     )
 
@@ -21,7 +30,7 @@ def conv_bn(inp, oup, stride):
 def conv_1x1_bn(inp, oup):
     return nn.Sequential(
         Conv2d(inp, oup, 1, 1, 0, bias=False),
-        BatchNorm2d(oup),
+        FrozenBatchNorm2d(oup),
         nn.ReLU6(inplace=True)
     )
 
@@ -39,25 +48,25 @@ class InvertedResidual(nn.Module):
             self.conv = nn.Sequential(
                 # dw
                 Conv2d(hidden_dim, hidden_dim, 3, stride, 1, groups=hidden_dim, bias=False),
-                BatchNorm2d(hidden_dim),
+                FrozenBatchNorm2d(hidden_dim),
                 nn.ReLU6(inplace=True),
                 # pw-linear
                 Conv2d(hidden_dim, oup, 1, 1, 0, bias=False),
-                BatchNorm2d(oup),
+                FrozenBatchNorm2d(oup),
             )
         else:
             self.conv = nn.Sequential(
                 # pw
                 Conv2d(inp, hidden_dim, 1, 1, 0, bias=False),
-                BatchNorm2d(hidden_dim),
+                FrozenBatchNorm2d(hidden_dim),
                 nn.ReLU6(inplace=True),
                 # dw
                 Conv2d(hidden_dim, hidden_dim, 3, stride, 1, groups=hidden_dim, bias=False),
-                BatchNorm2d(hidden_dim),
+                FrozenBatchNorm2d(hidden_dim),
                 nn.ReLU6(inplace=True),
                 # pw-linear
                 Conv2d(hidden_dim, oup, 1, 1, 0, bias=False),
-                BatchNorm2d(oup),
+                FrozenBatchNorm2d(oup),
             )
 
     def forward(self, x):
@@ -138,10 +147,9 @@ class MobileNetV2(Backbone):
 @BACKBONE_REGISTRY.register()
 def build_mnv2_backbone(cfg, input_shape):
     """
-    Create a ResNet instance from config.
-
+    Create a MobileNetV2 instance from config.
     Returns:
-        ResNet: a :class:`ResNet` instance.
+        MobileNetV2: a :class:`MobileNetV2` instance.
     """
     out_features = cfg.MODEL.RESNETS.OUT_FEATURES
 
@@ -153,3 +161,55 @@ def build_mnv2_backbone(cfg, input_shape):
     model._out_feature_channels = out_feature_channels
     model._out_feature_strides = out_feature_strides
     return model
+
+
+@BACKBONE_REGISTRY.register()
+def build_mobilenetv2_fpn_backbone(cfg, input_shape: ShapeSpec):
+    """
+    Args:
+        cfg: a detectron2 CfgNode
+    Returns:
+        backbone (Backbone): backbone module, must be a subclass of :class:`Backbone`.
+    """
+    bottom_up = build_mnv2_backbone(cfg, input_shape)
+    in_features = cfg.MODEL.FPN.IN_FEATURES
+    out_channels = cfg.MODEL.FPN.OUT_CHANNELS
+    backbone = FPN(
+        bottom_up=bottom_up,
+        in_features=in_features,
+        out_channels=out_channels,
+        norm=cfg.MODEL.FPN.NORM,
+        top_block=LastLevelMaxPool(),
+        fuse_type=cfg.MODEL.FPN.FUSE_TYPE,
+    )
+    return backbone
+
+
+@BACKBONE_REGISTRY.register()
+def build_fcos_mobilenetv2_fpn_backbone(cfg, input_shape: ShapeSpec):
+    """
+    Args:
+        cfg: a detectron2 CfgNode
+    Returns:
+        backbone (Backbone): backbone module, must be a subclass of :class:`Backbone`.
+    """
+    bottom_up = build_mnv2_backbone(cfg, input_shape)
+    in_features = cfg.MODEL.FPN.IN_FEATURES
+    out_channels = cfg.MODEL.FPN.OUT_CHANNELS
+    top_levels = cfg.MODEL.FCOS.TOP_LEVELS
+    in_channels_top = out_channels
+    if top_levels == 2:
+        top_block = LastLevelP6P7(in_channels_top, out_channels, "p5")
+    if top_levels == 1:
+        top_block = LastLevelP6(in_channels_top, out_channels, "p5")
+    elif top_levels == 0:
+        top_block = None
+    backbone = FPN(
+        bottom_up=bottom_up,
+        in_features=in_features,
+        out_channels=out_channels,
+        norm=cfg.MODEL.FPN.NORM,
+        top_block=top_block,
+        fuse_type=cfg.MODEL.FPN.FUSE_TYPE,
+    )
+    return backbone

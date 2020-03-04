@@ -78,6 +78,8 @@ CenterMask (maskrcnn-benchmark)|V2-99|3x|0.106|40.2|45.6|[link](https://github.c
 
 |Method|Backbone|Param.|lr sched|inference time|mask AP|box AP|download|
 |:--------:|:--------:|:--:|:--:|:--:|:----:|:----:|:--------:|
+|CenterMask2-Lite|MobileNetV2|3.5M|4x|0.021|27.2|29.8|<a href="https://dl.dropbox.com/s/8omou546f0n78nj/centermask_lite_Mv2_ms_4x.pth">model</a>&nbsp;\|&nbsp;<a href="https://dl.dropbox.com/s/2jlcwy30eq72w47/centermask_lite_Mv2_ms_4x_metrics.json">metrics</a>
+||
 |CenterMask2-Lite|V-19|11.2M|4x|0.023|32.8|35.9|<a href="https://dl.dropbox.com/s/dret2ap7djty7mp/centermask2-lite-V-19-eSE-FPN-ms-4x.pth">model</a>&nbsp;\|&nbsp;<a href="https://dl.dropbox.com/s/zsta7azy87a833u/centermask2-lite-V-19-eSE-FPN-ms-4x-metrics.json">metrics</a>
 |CenterMask2-Lite|V-19-**Slim**|3.1M|4x|0.021|29.8|32.5|<a href="https://dl.dropbox.com/s/o2n1ifl0zkbv16x/centermask-lite-V-19-eSE-slim-FPN-ms-4x.pth">model</a>&nbsp;\|&nbsp;<a href="https://dl.dropbox.com/s/8y71oz0kxwqk7go/centermask-lite-V-19-eSE-slim-FPN-ms-4x-metrics.json?dl=0">metrics</a>
 |CenterMask2-Lite|V-19**Slim**-**DW**|1.8M|4x|0.020|27.1|29.5|<a href="https://dl.dropbox.com/s/vsvhwtqm6ko1c7m/centermask-lite-V-19-eSE-slim-dw-FPN-ms-4x.pth">model</a>&nbsp;\|&nbsp;<a href="https://dl.dropbox.com/s/q4idjnsgvo151zx/centermask-lite-V-19-eSE-slim-dw-FPN-ms-4x-metrics.json">metrics</a>
@@ -95,9 +97,10 @@ Prepare for coco dataset following [this instruction](https://github.com/faceboo
 
 #### ImageNet Pretrained Models
 
-We provide backbone weights pretrained on ImageNet-1k dataset.
-* [VoVNetV2-19-Slim-DW](https://www.dropbox.com/s/f3s7ospitqoals1/vovnet19_ese_slim_dw_detectron2.pth)
-* [VoVNetV2-19-Slim](https://www.dropbox.com/s/8h5ybmi4ftbcom0/vovnet19_ese_slim_detectron2.pth)
+We provide backbone weights pretrained on ImageNet-1k dataset for detectron2.
+* [MobileNet-V2](https://dl.dropbox.com/s/yduxbc13s3ip6qn/mobilenet_v2_detectron2.pth)
+* [VoVNetV2-19-Slim-DW](https://dl.dropbox.com/s/f3s7ospitqoals1/vovnet19_ese_slim_dw_detectron2.pth)
+* [VoVNetV2-19-Slim](https://dl.dropbox.com/s/8h5ybmi4ftbcom0/vovnet19_ese_slim_detectron2.pth)
 * [VoVNetV2-19](https://dl.dropbox.com/s/rptgw6stppbiw1u/vovnet19_ese_detectron2.pth)
 * [VoVNetV2-39](https://dl.dropbox.com/s/q98pypf96rhtd8y/vovnet39_ese_detectron2.pth)
 * [VoVNetV2-57](https://dl.dropbox.com/s/8xl0cb3jj51f45a/vovnet57_ese_detectron2.pth)
