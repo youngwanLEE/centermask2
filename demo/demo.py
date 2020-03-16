@@ -11,7 +11,7 @@ from detectron2.data.detection_utils import read_image
 from detectron2.utils.logger import setup_logger
 
 from predictor import VisualizationDemo
-from adet.config import get_cfg
+from centermask.config import get_cfg
 
 # constants
 WINDOW_NAME = "COCO detections"
