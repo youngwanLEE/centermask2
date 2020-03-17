@@ -6,6 +6,10 @@ import os
 import time
 import cv2
 import tqdm
+import sys
+
+#TODO : this is a temporary expedient
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from detectron2.data.detection_utils import read_image
 from detectron2.utils.logger import setup_logger
