@@ -4,6 +4,11 @@
 
 **CenterMask2** is an upgraded implementation on top of [detectron2](https://github.com/facebookresearch/detectron2) beyond original [CenterMask](https://github.com/youngwanLEE/CenterMask) based on [maskrcnn-benchmark](https://github.com/facebookresearch/maskrcnn-benchmark).
 
+> **CenterMask : Real-Time Anchor-Free Instance Segmentation (CVPR 2020)**<br>
+> [Youngwan Lee](https://github.com/youngwanLEE) and Jongyoul Park<br>
+> Electronics and Telecommunications Research Institute (ETRI)<br>
+> https://arxiv.org/abs/1911.06667
+
 
 <div align="center">
   <img src="https://dl.dropbox.com/s/yg9zr1tvljoeuyi/architecture.png" width="850px" />
@@ -150,7 +155,7 @@ If you use VoVNet, please use the following BibTeX entry.
   year = {2019}
 }
 
-@article{lee2019centermask,
+@inproceedings{lee2020centermask,
   title={CenterMask: Real-Time Anchor-Free Instance Segmentation},
   author={Lee, Youngwan and Park, Jongyoul},
   booktitle={CVPR},
