@@ -1,17 +1,20 @@
 # Copyright (c) Youngwan Lee (ETRI) All Rights Reserved.
 import torch
 from torch import nn
-from typing import Dict
+from typing import Dict, List, Optional, Tuple, Union
 import numpy as np
 
 from detectron2.modeling.roi_heads import (
-	ROI_HEADS_REGISTRY,
+    ROI_HEADS_REGISTRY,
 )
-from detectron2.structures import Boxes, Instances, pairwise_iou
+from detectron2.structures import Boxes, Instances, pairwise_iou, ImageList
 from detectron2.utils.events import get_event_storage
 from detectron2.modeling.matcher import Matcher
 from detectron2.modeling.sampling import subsample_labels
 from detectron2.layers import ShapeSpec
+# from detectron2.modeling.roi_heads.keypoint_head import build_keypoint_head
+from .keypoint_head import build_keypoint_head
+
 
 from .mask_head import build_mask_head, mask_rcnn_loss, mask_rcnn_inference
 from .maskiou_head import build_maskiou_head, mask_iou_loss, mask_iou_inference
@@ -51,6 +54,51 @@ def select_foreground_proposals(proposals, bg_label):
         fg_proposals.append(proposals_per_image[fg_idxs])
         fg_selection_masks.append(fg_selection_mask)
     return fg_proposals, fg_selection_masks
+
+
+def select_proposals_with_visible_keypoints(proposals: List[Instances]) -> List[Instances]:
+    """
+    Args:
+        proposals (list[Instances]): a list of N Instances, where N is the
+            number of images.
+
+    Returns:
+        proposals: only contains proposals with at least one visible keypoint.
+
+    Note that this is still slightly different from Detectron.
+    In Detectron, proposals for training keypoint head are re-sampled from
+    all the proposals with IOU>threshold & >=1 visible keypoint.
+
+    Here, the proposals are first sampled from all proposals with
+    IOU>threshold, then proposals with no visible keypoint are filtered out.
+    This strategy seems to make no difference on Detectron and is easier to implement.
+    """
+    ret = []
+    all_num_fg = []
+    for proposals_per_image in proposals:
+        # If empty/unannotated image (hard negatives), skip filtering for train
+        if len(proposals_per_image) == 0:
+            ret.append(proposals_per_image)
+            continue
+        gt_keypoints = proposals_per_image.gt_keypoints.tensor
+        # #fg x K x 3
+        vis_mask = gt_keypoints[:, :, 2] >= 1
+        xs, ys = gt_keypoints[:, :, 0], gt_keypoints[:, :, 1]
+        proposal_boxes = proposals_per_image.proposal_boxes.tensor.unsqueeze(dim=1)  # #fg x 1 x 4
+        kp_in_box = (
+            (xs >= proposal_boxes[:, :, 0])
+            & (xs <= proposal_boxes[:, :, 2])
+            & (ys >= proposal_boxes[:, :, 1])
+            & (ys <= proposal_boxes[:, :, 3])
+        )
+        selection = (kp_in_box & vis_mask).any(dim=1)
+        selection_idxs = torch.nonzero(selection).squeeze(1)
+        all_num_fg.append(selection_idxs.numel())
+        ret.append(proposals_per_image[selection_idxs])
+
+    storage = get_event_storage()
+    storage.put_scalar("keypoint_head/num_fg_samples", np.mean(all_num_fg))
+    return ret
 
 
 class ROIHeads(nn.Module):
@@ -261,6 +309,7 @@ class CenterROIHeads(ROIHeads):
         super(CenterROIHeads, self).__init__(cfg, input_shape)
         self._init_mask_head(cfg)
         self._init_mask_iou_head(cfg)
+        self._init_keypoint_head(cfg, input_shape)
 
 
     def _init_mask_head(self, cfg):
@@ -305,7 +354,40 @@ class CenterROIHeads(ROIHeads):
             cfg, ShapeSpec(channels=in_channels, width=pooler_resolution, height=pooler_resolution)
         )
 
-    def forward(self, images, features, proposals, targets=None):
+
+    def _init_keypoint_head(self, cfg, input_shape):
+        # fmt: off
+        self.keypoint_on  = cfg.MODEL.KEYPOINT_ON
+        if not self.keypoint_on:
+            return
+        self.kp_in_features = cfg.MODEL.ROI_KEYPOINT_HEAD.IN_FEATURES
+        pooler_resolution   = cfg.MODEL.ROI_KEYPOINT_HEAD.POOLER_RESOLUTION
+        pooler_scales       = tuple(1.0 / input_shape[k].stride for k in self.kp_in_features)  # noqa
+        sampling_ratio      = cfg.MODEL.ROI_KEYPOINT_HEAD.POOLER_SAMPLING_RATIO
+        pooler_type         = cfg.MODEL.ROI_KEYPOINT_HEAD.POOLER_TYPE
+        assign_crit         = cfg.MODEL.ROI_KEYPOINT_HEAD.ASSIGN_CRITERION
+        # fmt: on
+
+        in_channels = [input_shape[f].channels for f in self.kp_in_features][0]
+
+        self.keypoint_pooler = ROIPooler(
+            output_size=pooler_resolution,
+            scales=pooler_scales,
+            sampling_ratio=sampling_ratio,
+            pooler_type=pooler_type,
+            assign_crit=assign_crit,
+        )
+        self.keypoint_head = build_keypoint_head(
+            cfg, ShapeSpec(channels=in_channels, width=pooler_resolution, height=pooler_resolution)
+        )
+
+    def forward(
+        self,
+        images: ImageList,
+        features: Dict[str, torch.Tensor],
+        proposals: List[Instances],
+        targets: Optional[List[Instances]] = None,
+    ) -> Tuple[List[Instances], Dict[str, torch.Tensor]]:
         """
         See :class:`ROIHeads.forward`.
         """
@@ -314,14 +396,13 @@ class CenterROIHeads(ROIHeads):
             proposals = self.label_and_sample_proposals(proposals, targets)
         del targets
 
-        features_list = [features[f] for f in self.in_features]
-
         if self.training:
             if self.maskiou_on:
-                losses, mask_features, selected_mask, labels, maskiou_targets = self._forward_mask(features_list, proposals)
+                losses, mask_features, selected_mask, labels, maskiou_targets = self._forward_mask(features, proposals)
                 losses.update(self._forward_maskiou(mask_features, proposals, selected_mask, labels, maskiou_targets))
             else:
-                losses = self._forward_mask(features_list, proposals)
+                losses = self._forward_mask(features, proposals)
+            losses.update(self._forward_keypoint(features, proposals))
             return proposals, losses
         else:
             # During inference cascaded prediction is used: the mask and keypoints heads are only
@@ -329,7 +410,9 @@ class CenterROIHeads(ROIHeads):
             pred_instances = self.forward_with_given_boxes(features, proposals)
             return pred_instances, {}
 
-    def forward_with_given_boxes(self, features, instances):
+    def forward_with_given_boxes(
+        self, features: Dict[str, torch.Tensor], instances: List[Instances]
+    ) -> List[Instances]:
         """
         Use the given boxes in `instances` to produce other (non-box) per-ROI outputs.
 
@@ -343,29 +426,33 @@ class CenterROIHeads(ROIHeads):
                 "pred_boxes" and "pred_classes" to exist.
 
         Returns:
-            instances (Instances):
-                the same `Instances` object, with extra
+            instances (list[Instances]):
+                the same `Instances` objects, with extra
                 fields such as `pred_masks` or `pred_keypoints`.
         """
         assert not self.training
         assert instances[0].has("pred_boxes") and instances[0].has("pred_classes")
-        features = [features[f] for f in self.in_features]
 
-        if self.mask_on:
-            if self.maskiou_on:
-                instances, mask_features = self._forward_mask(features, instances)
-                instances = self._forward_maskiou(mask_features, instances)
-            else:
-                instances = self._forward_mask(features, instances)
+        if self.maskiou_on:
+            instances, mask_features = self._forward_mask(features, instances)
+            instances = self._forward_maskiou(mask_features, instances)
+        else:
+            instances = self._forward_mask(features, instances)
+
+        instances = self._forward_keypoint(features, instances)
+
         return instances
 
 
-    def _forward_mask(self, features, instances):
+    def _forward_mask(
+        self, features: Dict[str, torch.Tensor], instances: List[Instances]
+    ) -> Union[Dict[str, torch.Tensor], List[Instances]]:
         """
         Forward logic of the mask prediction branch.
 
         Args:
-            features (list[Tensor]): #level input features for mask prediction
+            features (dict[str, Tensor]): mapping from feature map names to tensor.
+                Same as in :meth:`ROIHeads.forward`.
             instances (list[Instances]): the per-image instances to train/predict masks.
                 In training, they can be the proposals.
                 In inference, they can be the predicted boxes.
@@ -376,6 +463,8 @@ class CenterROIHeads(ROIHeads):
         """
         if not self.mask_on:
             return {} if self.training else instances
+
+        features = [features[f] for f in self.in_features]
 
         if self.training:
             # The loss is only defined on positive proposals.
@@ -420,10 +509,45 @@ class CenterROIHeads(ROIHeads):
             return {"loss_maskiou": mask_iou_loss(labels, pred_maskiou, maskiou_targets, self.maskiou_weight)}
 
         else:
-            #TODO
             selected_mask = torch.cat([i.pred_masks for i in instances], 0)
             if selected_mask.shape[0] == 0:
                 return instances
             pred_maskiou = self.maskiou_head(mask_features, selected_mask)
             mask_iou_inference(instances, pred_maskiou)
             return instances
+
+
+    def _forward_keypoint(
+        self, features: Dict[str, torch.Tensor], instances: List[Instances]
+    ) -> Union[Dict[str, torch.Tensor], List[Instances]]:
+        """
+        Forward logic of the keypoint prediction branch.
+
+        Args:
+            features (dict[str, Tensor]): mapping from feature map names to tensor.
+                Same as in :meth:`ROIHeads.forward`.
+            instances (list[Instances]): the per-image instances to train/predict keypoints.
+                In training, they can be the proposals.
+                In inference, they can be the predicted boxes.
+
+        Returns:
+            In training, a dict of losses.
+            In inference, update `instances` with new fields "pred_keypoints" and return it.
+        """
+        if not self.keypoint_on:
+            return {} if self.training else instances
+
+        features = [features[f] for f in self.kp_in_features]
+
+        if self.training:
+            # The loss is defined on positive proposals with at >=1 visible keypoints.
+            proposals, _ = select_foreground_proposals(instances, self.num_classes)
+            proposals = select_proposals_with_visible_keypoints(proposals)
+            # proposal_boxes = [x.proposal_boxes for x in proposals]
+
+            keypoint_features = self.keypoint_pooler(features, proposals, self.training)
+            return self.keypoint_head(keypoint_features, proposals)
+        else:
+            # pred_boxes = [x.pred_boxes for x in instances]
+            keypoint_features = self.keypoint_pooler(features, instances)
+            return self.keypoint_head(keypoint_features, instances)

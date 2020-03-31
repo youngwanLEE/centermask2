@@ -40,8 +40,8 @@ dist/
 # project dirs
 /datasets/coco
 /datasets/lvis
+/datasets/cityscapes
 /models
 /debug
 /weights
 eval.sh
-/datasets

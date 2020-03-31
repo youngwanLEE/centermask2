@@ -61,6 +61,9 @@ _C.MODEL.VOVNET.OUT_FEATURES = ["stage2", "stage3", "stage4", "stage5"]
 _C.MODEL.VOVNET.NORM = "FrozenBN"
 _C.MODEL.VOVNET.OUT_CHANNELS = 256
 _C.MODEL.VOVNET.BACKBONE_OUT_CHANNELS = 256
+_C.MODEL.VOVNET.STAGE_WITH_DCN = (False, False, False, False)
+_C.MODEL.VOVNET.WITH_MODULATED_DCN = False
+_C.MODEL.VOVNET.DEFORMABLE_GROUPS = 1
 
 
 # ---------------------------------------------------------------------------- #
@@ -74,3 +77,10 @@ _C.MODEL.ROI_MASKIOU_HEAD = CN()
 _C.MODEL.ROI_MASKIOU_HEAD.NAME = "MaskIoUHead"
 _C.MODEL.ROI_MASKIOU_HEAD.CONV_DIM = 256
 _C.MODEL.ROI_MASKIOU_HEAD.NUM_CONV = 4
+
+
+# ---------------------------------------------------------------------------- #
+# Keypoint Head
+# ---------------------------------------------------------------------------- #
+_C.MODEL.ROI_KEYPOINT_HEAD.IN_FEATURES = ["p2", "p3", "p4", "p5"]
+_C.MODEL.ROI_KEYPOINT_HEAD.ASSIGN_CRITERION = "ratio"

@@ -1,0 +1,12 @@
+_BASE_: "Base-CenterMask-ResNet.yaml"
+MODEL:
+  META_ARCHITECTURE: "PanopticFPN"
+  RESNETS:
+    OUT_FEATURES: ["res2", "res3", "res4", "res5"]
+  FPN:
+    IN_FEATURES: ["res2", "res3", "res4", "res5"]
+  SEM_SEG_HEAD:
+    LOSS_WEIGHT: 0.5
+DATASETS:
+  TRAIN: ("coco_2017_train_panoptic_separated",)
+  TEST: ("coco_2017_val_panoptic_separated",)

@@ -6,6 +6,7 @@ from torch.nn import functional as F
 
 from detectron2.layers import Conv2d, ConvTranspose2d, ShapeSpec, get_norm
 from .mask_head import ROI_MASK_HEAD_REGISTRY
+from centermask.layers import Max
 
 
 class SpatialAttention(nn.Module):
@@ -20,10 +21,8 @@ class SpatialAttention(nn.Module):
         self.sigmoid = nn.Sigmoid()
 
     def forward(self, x):
-        if x.shape[0] == 0:
-            return x
         avg_out = torch.mean(x, dim=1, keepdim=True)
-        max_out, _ = torch.max(x, dim=1, keepdim=True)
+        max_out = Max(x)
         scale = torch.cat([avg_out, max_out], dim=1)
         scale = self.conv(scale)
         return x * self.sigmoid(scale)

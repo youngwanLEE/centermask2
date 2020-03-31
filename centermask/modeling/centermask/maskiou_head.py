@@ -5,6 +5,7 @@ from torch.nn import functional as F
 
 from detectron2.layers import Conv2d, ShapeSpec, cat
 from detectron2.utils.registry import Registry
+from centermask.layers import MaxPool2d, Linear
 
 ROI_MASKIOU_HEAD_REGISTRY = Registry("ROI_MASKIOU_HEAD")
 ROI_MASKIOU_HEAD_REGISTRY.__doc__ = """
@@ -19,9 +20,9 @@ def mask_iou_loss(labels, pred_maskiou, gt_maskiou, loss_weight):
     Compute the maskiou loss.
 
     Args:
-        labels (Tensor): Given mask labels
-        pred_maskiou: Predicted maskiou
-        gt_maskiou: Ground Truth IOU generated in mask head
+        labels (Tensor): Given mask labels (num of instance,)
+        pred_maskiou (Tensor):  A tensor of shape (num of instance, C)
+        gt_maskiou (Tensor): Ground Truth IOU generated in mask head (num of instance,)
     """
     def l2_loss(input, target):
         """
@@ -84,29 +85,30 @@ class MaskIoUHead(nn.Module):
             )
             self.add_module("maskiou_fcn{}".format(k+1), conv)
             self.conv_relus.append(conv)
-        self.maskiou_fc1 = nn.Linear(conv_dims*resolution**2, 1024)
-        self.maskiou_fc2 = nn.Linear(1024, 1024)
-        self.maskiou = nn.Linear(1024, num_classes)
+        self.maskiou_fc1 = Linear(conv_dims*resolution**2, 1024)
+        self.maskiou_fc2 = Linear(1024, 1024)
+        self.maskiou = Linear(1024, num_classes)
+        self.pooling = MaxPool2d(kernel_size=2, stride=2)
 
 
         for l in self.conv_relus:
             nn.init.kaiming_normal_(l.weight, mode="fan_out", nonlinearity="relu")
             nn.init.constant_(l.bias, 0)
-
         for l in [self.maskiou_fc1, self.maskiou_fc2]:
-            nn.init.kaiming_uniform_(l.weight, a=1)
+            nn.init.kaiming_normal_(l.weight, mode="fan_out", nonlinearity="relu")
             nn.init.constant_(l.bias, 0)
+
 
         nn.init.normal_(self.maskiou.weight, mean=0, std=0.01)
         nn.init.constant_(self.maskiou.bias, 0)
 
     def forward(self, x, mask):
-        mask_pool = F.max_pool2d(mask, kernel_size=2, stride=2)
+        mask_pool = self.pooling(mask)
         x = torch.cat((x, mask_pool), 1)
 
         for layer in self.conv_relus:
             x = layer(x)
-        x = x.view(x.size(0), -1)
+        x = torch.flatten(x, 1)
         x = F.relu(self.maskiou_fc1(x))
         x = F.relu(self.maskiou_fc2(x))
         x = self.maskiou(x)

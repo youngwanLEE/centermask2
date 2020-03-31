@@ -4,10 +4,10 @@
 
 **CenterMask2** is an upgraded implementation on top of [detectron2](https://github.com/facebookresearch/detectron2) beyond original [CenterMask](https://github.com/youngwanLEE/CenterMask) based on [maskrcnn-benchmark](https://github.com/facebookresearch/maskrcnn-benchmark).
 
-> **CenterMask : Real-Time Anchor-Free Instance Segmentation (CVPR 2020)**<br>
+> **[CenterMask : Real-Time Anchor-Free Instance Segmentation](https://arxiv.org/abs/1911.06667) (CVPR 2020)**<br>
 > [Youngwan Lee](https://github.com/youngwanLEE) and Jongyoul Park<br>
 > Electronics and Telecommunications Research Institute (ETRI)<br>
-> https://arxiv.org/abs/1911.06667
+> pre-print : https://arxiv.org/abs/1911.06667
 
 
 <div align="center">
@@ -27,6 +27,7 @@
 ## Updates
 - CenterMask2 has been released. (20/02/2020)
 - Lightweight VoVNet has ben released. (26/02/2020)
+- Panoptic-CenterMask has been released. (31/03/2020)
 
 ## Results on COCO val
 
@@ -91,6 +92,22 @@ CenterMask (maskrcnn-benchmark)|V2-99|3x|0.106|40.2|45.6|[link](https://github.c
 * _**DW** and **Slim** denote depthwise separable convolution and a thiner model with half the channel size, respectively._   
 * __Params.__ means the number of parameters of backbone.   
 
+
+### Panoptic-CenterMask
+
+|Method|Backbone|lr sched|inference time|mask AP|box AP|PQ|download|
+|:--------:|:--------:|:--:|:--:|:--:|:----:|:----:|:--------:|
+|Panoptic-FPN|R-50|3x|0.063|40.0|36.5|41.5|<a href="https://dl.fbaipublicfiles.com/detectron2/COCO-PanopticSegmentation/panoptic_fpn_R_50_3x/139514569/model_final_c10459.pkl">model</a>&nbsp;\|&nbsp;<a href="https://dl.fbaipublicfiles.com/detectron2/COCO-PanopticSegmentation/panoptic_fpn_R_50_3x/139514569/metrics.json">metrics</a>
+|Panoptic-CenterMask|R-50|3x|0.063|41.4|37.3|42.0|<a href="https://dl.dropbox.com/s/vxe51cdeprao94j/panoptic_centermask_R_50_ms_3x.pth">model</a>&nbsp;\|&nbsp;<a href="https://dl.dropbox.com/s/dfddgx6rnw1zr4l/panoptic_centermask_R_50_ms_3x_metrics.json">metrics</a>
+|Panoptic-FPN|V-39|3x|0.063|42.8|38.5|43.4|<a href="https://dl.dropbox.com/s/fnr9r4arv0cbfbf/panoptic_V_39_eSE_3x.pth">model</a>&nbsp;\|&nbsp;<a href="https://dl.dropbox.com/s/vftfukrjuu7w1ao/panoptic_V_39_eSE_3x_metrics.json">metrics</a>
+|Panoptic-CenterMask|V-39|3x|0.066|43.4|39.0|43.7|<a href="https://dl.dropbox.com/s/49ig16ailra1f4t/panoptic_centermask_V_39_eSE_ms_3x.pth">model</a>&nbsp;\|&nbsp;<a href="https://dl.dropbox.com/s/wy4mn8n513k0um5/panoptic_centermask_V_39_eSE_ms_3x_metrics.json">metrics</a>
+||
+|Panoptic-FPN|R-101|3x|0.078|42.4|38.5|43.0|<a href="https://dl.fbaipublicfiles.com/detectron2/COCO-PanopticSegmentation/panoptic_fpn_R_101_3x/139514519/model_final_cafdb1.pkl">model</a>&nbsp;\|&nbsp;<a href="https://dl.fbaipublicfiles.com/detectron2/COCO-PanopticSegmentation/panoptic_fpn_R_101_3x/139514519/metrics.json">metrics</a>
+|Panoptic-CenterMask|R-101|3x|0.076|43.5|39.0|43.6|<a href="https://dl.dropbox.com/s/y5stg3qx72gff5o/panoptic_centermask_R_101_ms_3x.pth">model</a>&nbsp;\|&nbsp;<a href="https://dl.dropbox.com/s/ojljt0obp8vnr8s/panoptic_centermask_R_101_ms_3x_metrics.json">metrics</a>
+|Panoptic-FPN|V-57|3x|0.070|43.4|39.2|44.3|<a href="https://www.dropbox.com/s/zhoqx5rvc0jj0oa/panoptic_V_57_eSE_3x.pth?dl=1">model</a>&nbsp;\|&nbsp;<a href="https://dl.dropbox.com/s/20hwrmru15dilre/panoptic_V_57_eSE_3x_metrics.json">metrics</a>
+|Panoptic-CenterMask|V-57|3x|0.071|43.9|39.6|44.5|<a href="https://dl.dropbox.com/s/kqukww4y7tbgbrh/panoptic_centermask_V_57_ms_3x.pth">model</a>&nbsp;\|&nbsp;<a href="https://dl.dropbox.com/s/4asto3b4iya74ak/panoptic_centermask_V_57_ms_3x_metrics.json">metrics</a>
+||
+|Panoptic-CenterMask|V-99|3x|0.091|45.1|40.6|45.4|<a href="https://dl.dropbox.com/s/pr6a3inpasn7qlz/panoptic_centermask_V_99_ms_3x.pth">model</a>&nbsp;\|&nbsp;<a href="https://dl.dropbox.com/s/00e8x0riplme7pm/panoptic_centermask_V_99_ms_3x_metrics.json">metrics</a>
 
 
 ## Installation

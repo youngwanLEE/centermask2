@@ -1,0 +1,12 @@
+_BASE_: "Base-CenterMask-VoVNet.yaml"
+MODEL:
+  META_ARCHITECTURE: "PanopticFPN"
+  VOVNET:
+    OUT_FEATURES: ["stage2", "stage3", "stage4", "stage5"]
+  FPN:
+    IN_FEATURES: ["stage2", "stage3", "stage4", "stage5"]
+  SEM_SEG_HEAD:
+    LOSS_WEIGHT: 0.5
+DATASETS:
+  TRAIN: ("coco_2017_train_panoptic_separated",)
+  TEST: ("coco_2017_val_panoptic_separated",)
