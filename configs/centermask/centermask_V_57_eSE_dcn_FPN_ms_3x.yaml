@@ -1,0 +1,12 @@
+_BASE_: "Base-CenterMask-VoVNet.yaml"
+MODEL:
+  WEIGHTS: "https://www.dropbox.com/s/8xl0cb3jj51f45a/vovnet57_ese_detectron2.pth?dl=1"
+  VOVNET:
+    CONV_BODY : "V-57-eSE"
+    STAGE_WITH_DCN: (False, True, True, True)
+    WITH_MODULATED_DCN: True
+    DEFORMABLE_GROUPS: 1
+SOLVER:
+  STEPS: (210000, 250000)
+  MAX_ITER: 270000
+OUTPUT_DIR: "output/centermask/CenterMask-V-57-dcn-ms-3x"
