@@ -11,7 +11,7 @@ from detectron2.data import MetadataCatalog, build_detection_train_loader
 from detectron2.engine import DefaultTrainer, default_argument_parser, default_setup, hooks, launch
 from detectron2.utils.events import EventStorage
 from detectron2.evaluation import (
-    CityscapesEvaluator,
+    CityscapesInstanceEvaluator,
     COCOPanopticEvaluator,
     DatasetEvaluators,
     LVISEvaluator,
@@ -140,8 +140,8 @@ class Trainer(DefaultTrainer):
         if evaluator_type == "cityscapes":
             assert (
                 torch.cuda.device_count() >= comm.get_rank()
-            ), "CityscapesEvaluator currently do not work with multiple machines."
-            return CityscapesEvaluator(dataset_name)
+            ), "CityscapesInstanceEvaluator currently do not work with multiple machines."
+            return CityscapesInstanceEvaluator(dataset_name)
         if evaluator_type == "pascal_voc":
             return PascalVOCDetectionEvaluator(dataset_name)
         if evaluator_type == "lvis":
