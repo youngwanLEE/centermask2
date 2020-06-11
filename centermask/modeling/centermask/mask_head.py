@@ -149,7 +149,7 @@ def mask_rcnn_loss(pred_mask_logits, instances, maskiou_on):
     if maskiou_on:
         mask_ratios = cat(mask_ratios, dim=0)
 
-        value_eps = 1e-10 * torch.ones(gt_masks.shape[0], device=gt_masks.device)
+        value_eps = 1e-10 * torch.ones(gt_masks.shape[0], device=gt_masks.device).double()
         mask_ratios = torch.max(mask_ratios, value_eps)
 
         pred_masks = pred_mask_logits > 0
@@ -158,7 +158,7 @@ def mask_rcnn_loss(pred_mask_logits, instances, maskiou_on):
 
         mask_ovr_area = (pred_masks * gt_masks).sum(dim=[1,2]).float()
         mask_union_area = pred_masks.sum(dim=[1,2]) + mask_targets_full_area - mask_ovr_area
-        value_1 = torch.ones(pred_masks.shape[0], device=gt_masks.device)
+        value_1 = torch.ones(pred_masks.shape[0], device=gt_masks.device).double()
         value_0 = torch.zeros(pred_masks.shape[0], device=gt_masks.device)
         mask_union_area = torch.max(mask_union_area, value_1)
         mask_ovr_area = torch.max(mask_ovr_area, value_0)
