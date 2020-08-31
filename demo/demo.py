@@ -55,7 +55,7 @@ def get_parser():
     parser.add_argument(
         "--confidence-threshold",
         type=float,
-        default=0.5,
+        default=0.4,
         help="Minimum score for instance predictions to be shown",
     )
     parser.add_argument(
@@ -134,7 +134,8 @@ if __name__ == "__main__":
                 filename=output_fname,
                 # some installation of opencv may not support x264 (due to its license),
                 # you can try other format (e.g. MPEG)
-                fourcc=cv2.VideoWriter_fourcc(*"x264"),
+                # fourcc=cv2.VideoWriter_fourcc(*"x264"),
+                fourcc = cv2.VideoWriter_fourcc(*"mp4v"),
                 fps=float(frames_per_second),
                 frameSize=(width, height),
                 isColor=True,

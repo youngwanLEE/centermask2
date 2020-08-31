@@ -7,7 +7,7 @@ import torch.nn.functional as F
 import fvcore.nn.weight_init as weight_init
 from detectron2.modeling.backbone import Backbone
 from detectron2.modeling.backbone.build import BACKBONE_REGISTRY
-from detectron2.modeling.backbone.fpn import FPN
+from detectron2.modeling.backbone.fpn import FPN, LastLevelMaxPool
 from detectron2.layers import (
     Conv2d,
     DeformConv,
