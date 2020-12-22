@@ -4,14 +4,14 @@ import logging
 import os
 from collections import OrderedDict
 import torch
-from torch.nn.parallel import DistributedDataParallel
 
 import detectron2.utils.comm as comm
-from detectron2.data import MetadataCatalog, build_detection_train_loader
+from detectron2.data import MetadataCatalog
 from detectron2.engine import DefaultTrainer, default_argument_parser, default_setup, hooks, launch
-from detectron2.utils.events import EventStorage
 from detectron2.evaluation import (
-    CityscapesInstanceEvaluator,
+    # CityscapesInstanceEvaluator,
+    # CityscapesSemSegEvaluator,
+    # COCOEvaluator,
     COCOPanopticEvaluator,
     DatasetEvaluators,
     LVISEvaluator,
@@ -19,12 +19,14 @@ from detectron2.evaluation import (
     SemSegEvaluator,
     verify_results,
 )
-from centermask.evaluation import COCOEvaluator
+from centermask.evaluation import (
+    COCOEvaluator,
+    CityscapesInstanceEvaluator,
+    CityscapesSemSegEvaluator
+)
 from detectron2.modeling import GeneralizedRCNNWithTTA
-
-from detectron2.data.dataset_mapper import DatasetMapper
+from detectron2.checkpoint import DetectionCheckpointer
 from centermask.config import get_cfg
-from centermask.checkpoint import AdetCheckpointer
 
 
 class Trainer(DefaultTrainer):
@@ -33,83 +35,7 @@ class Trainer(DefaultTrainer):
     `build_train_loader` method.
     """
 
-    def __init__(self, cfg):
-        """
-        Args:
-            cfg (CfgNode):
-        Use the custom checkpointer, which loads other backbone models
-        with matching heuristics.
-        """
-        # Assume these objects must be constructed in this order.
-        model = self.build_model(cfg)
-        optimizer = self.build_optimizer(cfg, model)
-        data_loader = self.build_train_loader(cfg)
 
-        # For training, wrap with DDP. But don't need this for inference.
-        if comm.get_world_size() > 1:
-            model = DistributedDataParallel(
-                model, device_ids=[comm.get_local_rank()], broadcast_buffers=False
-            )
-        super(DefaultTrainer, self).__init__(model, data_loader, optimizer)
-
-        self.scheduler = self.build_lr_scheduler(cfg, optimizer)
-        # Assume no other objects need to be checkpointed.
-        # We can later make it checkpoint the stateful hooks
-        self.checkpointer = AdetCheckpointer(
-            # Assume you want to save checkpoints together with logs/statistics
-            model,
-            cfg.OUTPUT_DIR,
-            optimizer=optimizer,
-            scheduler=self.scheduler,
-        )
-        self.start_iter = 0
-        self.max_iter = cfg.SOLVER.MAX_ITER
-        self.cfg = cfg
-
-        self.register_hooks(self.build_hooks())
-
-    def train_loop(self, start_iter: int, max_iter: int):
-        """
-        Args:
-            start_iter, max_iter (int): See docs above
-        """
-        logger = logging.getLogger(__name__)
-        logger.info("Starting training from iteration {}".format(start_iter))
-
-        self.iter = self.start_iter = start_iter
-        self.max_iter = max_iter
-
-        with EventStorage(start_iter) as self.storage:
-            self.before_train()
-            for self.iter in range(start_iter, max_iter):
-                self.before_step()
-                self.run_step()
-                self.after_step()
-            self.after_train()
-
-    def train(self):
-        """
-        Run training.
-
-        Returns:
-            OrderedDict of results, if evaluation is enabled. Otherwise None.
-        """
-        self.train_loop(self.start_iter, self.max_iter)
-        if hasattr(self, "_last_eval_results") and comm.is_main_process():
-            verify_results(self.cfg, self._last_eval_results)
-            return self._last_eval_results
-
-    @classmethod
-    def build_train_loader(cls, cfg):
-        """
-        Returns:
-            iterable
-
-        It calls :func:`detectron2.data.build_detection_train_loader` with a customized
-        DatasetMapper, which adds categorical labels as a semantic mask.
-        """
-        mapper = DatasetMapper(cfg, True)
-        return build_detection_train_loader(cfg, mapper)
 
     @classmethod
     def build_evaluator(cls, cfg, dataset_name, output_folder=None):
@@ -128,31 +54,34 @@ class Trainer(DefaultTrainer):
                 SemSegEvaluator(
                     dataset_name,
                     distributed=True,
-                    num_classes=cfg.MODEL.SEM_SEG_HEAD.NUM_CLASSES,
-                    ignore_label=cfg.MODEL.SEM_SEG_HEAD.IGNORE_VALUE,
                     output_dir=output_folder,
                 )
             )
         if evaluator_type in ["coco", "coco_panoptic_seg"]:
-            evaluator_list.append(COCOEvaluator(dataset_name, cfg, True, output_folder))
+            evaluator_list.append(COCOEvaluator(dataset_name, output_dir=output_folder))
         if evaluator_type == "coco_panoptic_seg":
             evaluator_list.append(COCOPanopticEvaluator(dataset_name, output_folder))
-        if evaluator_type == "cityscapes":
+        if evaluator_type == "cityscapes_instance":
             assert (
                 torch.cuda.device_count() >= comm.get_rank()
-            ), "CityscapesInstanceEvaluator currently do not work with multiple machines."
+            ), "CityscapesEvaluator currently do not work with multiple machines."
             return CityscapesInstanceEvaluator(dataset_name)
-        if evaluator_type == "pascal_voc":
+        if evaluator_type == "cityscapes_sem_seg":
+            assert (
+                torch.cuda.device_count() >= comm.get_rank()
+            ), "CityscapesEvaluator currently do not work with multiple machines."
+            return CityscapesSemSegEvaluator(dataset_name)
+        elif evaluator_type == "pascal_voc":
             return PascalVOCDetectionEvaluator(dataset_name)
-        if evaluator_type == "lvis":
-            return LVISEvaluator(dataset_name, cfg, True, output_folder)
+        elif evaluator_type == "lvis":
+            return LVISEvaluator(dataset_name, output_dir=output_folder)
         if len(evaluator_list) == 0:
             raise NotImplementedError(
                 "no Evaluator for the dataset {} with the type {}".format(
                     dataset_name, evaluator_type
                 )
             )
-        if len(evaluator_list) == 1:
+        elif len(evaluator_list) == 1:
             return evaluator_list[0]
         return DatasetEvaluators(evaluator_list)
 
@@ -174,6 +103,7 @@ class Trainer(DefaultTrainer):
         return res
 
 
+
 def setup(args):
     """
     Create configs and perform basic setups.
@@ -191,18 +121,14 @@ def main(args):
 
     if args.eval_only:
         model = Trainer.build_model(cfg)
-        AdetCheckpointer(model, save_dir=cfg.OUTPUT_DIR).resume_or_load(
+        DetectionCheckpointer(model, save_dir=cfg.OUTPUT_DIR).resume_or_load(
             cfg.MODEL.WEIGHTS, resume=args.resume
         )
-        evaluators = [
-            Trainer.build_evaluator(cfg, name)
-            for name in cfg.DATASETS.TEST
-        ]
-        res = Trainer.test(cfg, model, evaluators)
-        if comm.is_main_process():
-            verify_results(cfg, res)
+        res = Trainer.test(cfg, model)
         if cfg.TEST.AUG.ENABLED:
             res.update(Trainer.test_with_TTA(cfg, model))
+        if comm.is_main_process():
+            verify_results(cfg, res)
         return res
 
     """

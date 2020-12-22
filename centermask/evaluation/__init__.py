@@ -1,1 +1,2 @@
 from .coco_evaluation import COCOEvaluator
+from .cityscapes_evaluation import CityscapesInstanceEvaluator,CityscapesSemSegEvaluator
