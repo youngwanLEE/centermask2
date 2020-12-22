@@ -28,14 +28,14 @@
 - CenterMask2 has been released. (20/02/2020)
 - Lightweight VoVNet has ben released. (26/02/2020)
 - Panoptic-CenterMask has been released. (31/03/2020)
-
+- code update for compatibility with pytorch1.7 and the latest detectron2 (22/12/2020)
 ## Results on COCO val
 
 ### Note
 
 We measure the inference time of all models with batch size 1 on the same V100 GPU machine.
 
-- pytorch1.3.1
+- pytorch1.7.0
 - CUDA 10.1
 - cuDNN 7.3
 - multi-scale augmentation
